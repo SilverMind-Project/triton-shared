@@ -17,7 +17,7 @@ class TritonGrpcClient:
 
     Example::
 
-        async with TritonGrpcClient("localhost:8001") as client:
+        async with TritonGrpcClient("localhost:8701") as client:
             outputs = await client.infer("person-detector", inputs, ["output0"])
     """
 

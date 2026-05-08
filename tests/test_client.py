@@ -22,7 +22,7 @@ def test_model_not_ready_error() -> None:
 
 
 def test_grpc_client_not_open_raises() -> None:
-    client = TritonGrpcClient("localhost:8001")
+    client = TritonGrpcClient("localhost:8701")
     try:
         import asyncio
 
@@ -41,6 +41,6 @@ def test_grpc_client_not_open_raises() -> None:
 
 def test_grpc_client_protocol_satisfaction() -> None:
     """TritonGrpcClient structurally satisfies TritonClientProtocol (runtime check)."""
-    client = TritonGrpcClient("localhost:8001")
+    client = TritonGrpcClient("localhost:8701")
     # Not opened, so can't call infer — but the type is structurally compatible.
     assert isinstance(client, TritonClientProtocol)
