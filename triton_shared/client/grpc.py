@@ -11,6 +11,27 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
+# Map numpy dtype to Triton dtype string.
+_NP_TO_TRITON_DTYPE: dict[type, str] = {
+    np.float32: "FP32",
+    np.float64: "FP64",
+    np.float16: "FP16",
+    np.int64: "INT64",
+    np.int32: "INT32",
+    np.int16: "INT16",
+    np.int8: "INT8",
+    np.uint64: "UINT64",
+    np.uint32: "UINT32",
+    np.uint16: "UINT16",
+    np.uint8: "UINT8",
+    np.bool_: "BOOL",
+}
+
+
+def _triton_dtype(arr: np.ndarray) -> str:
+    """Return the Triton dtype string for a numpy array."""
+    return _NP_TO_TRITON_DTYPE.get(arr.dtype.type, "FP32")
+
 
 class TritonGrpcClient:
     """Async gRPC Triton client.  Use as an async context manager.
@@ -42,17 +63,18 @@ class TritonGrpcClient:
     async def infer(
         self,
         model_name: str,
-        inputs: list[tuple[str, npt.NDArray[np.float32]]],
+        inputs: list[tuple[str, npt.NDArray[Any]]],
         output_names: list[str],
-    ) -> dict[str, npt.NDArray[np.float32]]:
+    ) -> dict[str, npt.NDArray[Any]]:
         """Run a batched inference request on Triton."""
         client = self._require_client()
         tc = self._triton_common()
 
         triton_inputs: list[Any] = []
         for name, array in inputs:
-            arr = np.ascontiguousarray(array.astype(np.float32))
-            inp: Any = tc.InferInput(name, list(arr.shape), "FP32")
+            arr = np.ascontiguousarray(array)
+            dtype_str = _triton_dtype(arr)
+            inp: Any = tc.InferInput(name, list(arr.shape), dtype_str)
             inp.set_data_from_numpy(arr)
             triton_inputs.append(inp)
 
@@ -65,7 +87,7 @@ class TritonGrpcClient:
             client_timeout=self._timeout_ms / 1000.0,
         )
 
-        return {name: np.asarray(result.as_numpy(name), dtype=np.float32) for name in output_names}
+        return {name: np.asarray(result.as_numpy(name)) for name in output_names}
 
     async def is_model_ready(self, model_name: str) -> bool:
         client = self._require_client()

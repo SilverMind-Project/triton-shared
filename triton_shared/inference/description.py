@@ -15,22 +15,22 @@ TASK_CAPTION = "<CAPTION>"
 TASK_OBJECT_DETECTION = "<OD>"
 
 # Florence-2 image preprocessing constants.
-# The default processor normalizes to mean=0.5, std=0.5 and expects the
-# shortest side resized to a standard size.
+# Matches the preprocessor_config.json from onnx-community/Florence-2-large.
+# Resize shortest side to input_size, rescale to [0, 1], then ImageNet normalize.
 FLORENCE_INPUT_SIZE = 768
-FLORENCE_MEAN = (0.5, 0.5, 0.5)
-FLORENCE_STD = (0.5, 0.5, 0.5)
+FLORENCE_MEAN = (0.485, 0.456, 0.406)
+FLORENCE_STD = (0.229, 0.224, 0.225)
 
 
 def florence_preprocess(
     image: Image.Image,
     input_size: int = FLORENCE_INPUT_SIZE,
 ) -> npt.NDArray[np.float32]:
-    """Preprocess a PIL image for Florence-2-large.
+    """Preprocess a PIL image for Florence-2-large (ONNX community export).
 
     1. Resize shortest side to *input_size* (bicubic)
     2. Convert to float32 [0, 1], CHW layout
-    3. Normalize with mean=0.5, std=0.5 (⇒ range [-1, 1])
+    3. Normalize with ImageNet mean/std
 
     Returns:
         (1, 3, H, W) float32 tensor in NCHW format.

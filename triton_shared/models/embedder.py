@@ -50,8 +50,8 @@ class TextEmbedder:
         outputs = await self._client.infer(
             model_name=self._model_name,
             inputs=[
-                ("input_ids", input_ids.astype(np.float32)),
-                ("attention_mask", attention_mask.astype(np.float32)),
+                ("input_ids", input_ids),
+                ("attention_mask", attention_mask),
             ],
             output_names=["sentence_embedding"],
         )

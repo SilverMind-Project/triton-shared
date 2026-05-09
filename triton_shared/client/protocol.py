@@ -5,7 +5,7 @@ Tests inject a mock that satisfies this Protocol without importing tritonclient.
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 import numpy as np
 import numpy.typing as npt
@@ -18,9 +18,9 @@ class TritonClientProtocol(Protocol):
     async def infer(
         self,
         model_name: str,
-        inputs: list[tuple[str, npt.NDArray[np.float32]]],
+        inputs: list[tuple[str, npt.NDArray[Any]]],
         output_names: list[str],
-    ) -> dict[str, npt.NDArray[np.float32]]:
+    ) -> dict[str, npt.NDArray[Any]]:
         """Run a batched inference request and return named output tensors."""
         ...
 
