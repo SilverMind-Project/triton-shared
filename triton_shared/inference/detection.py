@@ -11,10 +11,11 @@ Output tensor "output0" shape [batch, 300, 6]:
 
 from __future__ import annotations
 
-import cv2
 import numpy as np
 import numpy.typing as npt
+from PIL import Image
 
+from triton_shared.inference.image_utils import letterbox_image
 from triton_shared.inference.schemas import DetectionBox
 
 # Constants matching person-detector/config.pbtxt
@@ -29,16 +30,11 @@ def letterbox_preprocess(
     target: int = DETECTOR_INPUT_SIZE,
 ) -> tuple[npt.NDArray[np.float32], int, int, float]:
     """Letterbox-resize image to target×target, return (chw_fp32, pad_x, pad_y, scale)."""
-    h, w = image.shape[:2]
-    scale = target / max(h, w)
-    new_h = max(1, round(h * scale))
-    new_w = max(1, round(w * scale))
-    resized = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
-    pad_y = (target - new_h) // 2
-    pad_x = (target - new_w) // 2
-    canvas = np.full((target, target, 3), 114, dtype=np.uint8)
-    canvas[pad_y : pad_y + new_h, pad_x : pad_x + new_w] = resized
-    float_chw = canvas.astype(np.float32) / 255.0
+    pil = Image.fromarray(image)
+    canvas, pad_x, pad_y, scale = letterbox_image(
+        pil, target, fill=(114, 114, 114), resample=Image.Resampling.BILINEAR
+    )
+    float_chw = np.asarray(canvas, dtype=np.float32) / 255.0
     return float_chw.transpose(2, 0, 1), pad_x, pad_y, scale
 
 

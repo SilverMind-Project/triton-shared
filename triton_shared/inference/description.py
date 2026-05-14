@@ -9,6 +9,8 @@ import numpy as np
 import numpy.typing as npt
 from PIL import Image
 
+from triton_shared.inference.image_utils import letterbox_image
+
 # Florence-2 task prompts (see microsoft/Florence-2-large documentation).
 TASK_DETAILED_CAPTION = "<DETAILED_CAPTION>"
 TASK_CAPTION = "<CAPTION>"
@@ -28,22 +30,14 @@ def florence_preprocess(
 ) -> npt.NDArray[np.float32]:
     """Preprocess a PIL image for Florence-2-large (ONNX community export).
 
-    1. Resize shortest side to *input_size* (bicubic)
-    2. Convert to float32 [0, 1], CHW layout
-    3. Normalize with ImageNet mean/std
+    Letterboxes to *input_size*×*input_size* (black fill, bicubic scale) so
+    DaViT's window attention sees a square patch grid divisible by 32×32.
+    Then normalizes to float32 CHW with ImageNet mean/std.
 
     Returns:
-        (1, 3, H, W) float32 tensor in NCHW format.
+        (1, 3, input_size, input_size) float32 tensor in NCHW format.
     """
-    # Resize so the shortest side matches input_size.
-    w, h = image.size
-    if w < h:
-        new_w = input_size
-        new_h = round(h * input_size / w)
-    else:
-        new_h = input_size
-        new_w = round(w * input_size / h)
-    resized = image.resize((new_w, new_h), Image.Resampling.BICUBIC)
+    resized, _, _, _ = letterbox_image(image, input_size, fill=(0, 0, 0))
 
     # Convert to float32 CHW, scale to [0, 1].
     arr = np.asarray(resized, dtype=np.float32) / 255.0

@@ -42,7 +42,7 @@ class TritonGrpcClient:
             outputs = await client.infer("person-detector", inputs, ["output0"])
     """
 
-    def __init__(self, url: str, timeout_ms: int = 150) -> None:
+    def __init__(self, url: str, timeout_ms: int = 30_000) -> None:
         self._url = url
         self._timeout_ms = timeout_ms
         self._client: Any = None  # tritonclient.grpc.aio.InferenceServerClient
